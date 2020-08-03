@@ -266,14 +266,14 @@ class LaneNetPostProcessor(object):
 
         :param ipm_remap_file_path: ipm generate file path
         """
-        assert ops.exists(ipm_remap_file_path), '{:s} not exist'.format(ipm_remap_file_path)
+        # assert ops.exists(ipm_remap_file_path), '{:s} not exist'.format(ipm_remap_file_path)
 
         self._cluster = _LaneNetCluster()
-        self._ipm_remap_file_path = ipm_remap_file_path
+        # self._ipm_remap_file_path = ipm_remap_file_path
 
-        remap_file_load_ret = self._load_remap_matrix()
-        self._remap_to_ipm_x = remap_file_load_ret['remap_to_ipm_x']
-        self._remap_to_ipm_y = remap_file_load_ret['remap_to_ipm_y']
+        # remap_file_load_ret = self._load_remap_matrix()
+        # self._remap_to_ipm_x = remap_file_load_ret['remap_to_ipm_x']
+        # self._remap_to_ipm_y = remap_file_load_ret['remap_to_ipm_y']
 
         self._color_map = [np.array([255, 0, 0]),
                            np.array([0, 255, 0]),
