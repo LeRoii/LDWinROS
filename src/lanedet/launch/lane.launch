@@ -1,0 +1,10 @@
+<launch>   
+<!-- -->
+
+    <node pkg="lanedet" name="lanedetnode" type="lane_detection_warning.py" output="screen">
+    </node>
+
+    <node pkg="lanedet" name="videonode" type="videopub.py" output="screen">
+    </node>
+
+  </launch> 
