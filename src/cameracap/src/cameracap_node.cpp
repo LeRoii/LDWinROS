@@ -10,17 +10,10 @@
 
 #include "yolo_v2_class.hpp"
 
-
 #include "ros/ros.h"
 #include "hikcamera.h"
 
-
-
-//回调函数
-void callback(const sensor_msgs::NavSatFix& msg){
-    //ROS_INFO("NearPoint: numaber:%d", msg.latitude);
-     //ROS_INFO_STREAM("callback" << msg->data);
- }
+using std::endl;
 
  void draw_boxes(cv::Mat mat_img, std::vector<bbox_t> result_vec, std::vector<std::string> obj_names,
     int current_det_fps = -1, int current_cap_fps = -1)
@@ -79,11 +72,23 @@ std::vector<std::string> objects_names_from_file(std::string const filename) {
     return file_lines;
 }
 
+void yolo_det(Detector &obj_detector, cv::Mat &img, std::vector<std::string> &obj_names)
+{
+    auto start = std::chrono::steady_clock::now();
+    auto det_image = obj_detector.mat_to_image_resize(img);
+
+    std::vector<bbox_t> result_vec = obj_detector.detect_resized(*det_image, img.size().width, img.size().height);
+    auto end = std::chrono::steady_clock::now();
+    std::chrono::duration<double> spent = end - start;
+    std::cout << " Time: " << spent.count() << " sec \n";
+
+    draw_boxes(img, result_vec, obj_names);
+}
+
 
 int main (int argc, char** argv){
     ros::init(argc, argv, "camcap_node");
-    ros::NodeHandle n;
-
+    ros::NodeHandle nh;
 
     log4cxx::Logger::getLogger(ROSCONSOLE_DEFAULT_NAME)->setLevel(
     ros::console::g_level_lookup[ros::console::levels::Debug]);
@@ -91,7 +96,7 @@ int main (int argc, char** argv){
     
     hikcamera camerainst;
 
-    image_transport::ImageTransport it(n);
+    image_transport::ImageTransport it(nh);
     image_transport::Publisher pub = it.advertise("camera/image", 1);
 
     cv::Mat image;
@@ -101,40 +106,25 @@ int main (int argc, char** argv){
     //pFrameBuf = (unsigned char*)malloc(1024*1280*2);    //yuv422_yuyv
 
 
-
+#ifdef YOLO_DET
 //yolo detect
-    // std::string  names_file = "/home/xavier2/code/jetson_bot/src/cameracap/cfg/coco.names";
-    // std::string  cfg_file = "/home/xavier2/code/jetson_bot/src/cameracap/cfg/yolov4.cfg";
-    // std::string  weights_file = "/home/xavier2/code/jetson_bot/src/cameracap/cfg/yolov4.weights";
+    std::string yolo_class_name_file, yolo_cfg_file, yolo_weight;
 
-	// //std::string  names_file = "/home/xavier2/code/jetson_bot/src/cameracap/cfg/coco.names";
-    // //std::string  cfg_file = "/home/xavier2/code/jetson_bot/src/cameracap/cfg/yolov4.cfg";
-    // //std::string  weights_file = "/home/xavier2/code/jetson_bot/src/cameracap/cfg/yolov4.weights";
-    
-	// std::string filename;
+    nh.param<std::string>("yolo_class_name_file", yolo_class_name_file, "src/cameracap/cfg/coco.names");
+    nh.param<std::string>("yolo_cfg_file", yolo_cfg_file, "src/cameracap/cfg/yolov4.cfg");
+    nh.param<std::string>("yolo_weight", yolo_weight, "src/cameracap/cfg/yolov4.weights");
 
-    // Detector detector(cfg_file, weights_file);
-    // auto obj_names = objects_names_from_file(names_file);
 
-    //auto start = std::chrono::steady_clock::now();
-    //std::vector<bbox_t> result_vec = detector.detect_resized(*det_image, mat_img.size().width, mat_img.size().height);
-    //auto end = std::chrono::steady_clock::now();
-    //std::chrono::duration<double> spent = end - start;
-    //std::cout << " Time: " << spent.count() << " sec \n";
+    ROS_DEBUG_STREAM("after get parameter!!!!!!!!");
+    ROS_INFO_STREAM("yolo_class_name_file:"<<yolo_class_name_file<<endl<<"yolo_cfg_file:"<<yolo_cfg_file<<endl<<"yolo_weight:"<<yolo_weight);
 
-    //draw_boxes(mat_img, result_vec, obj_names);
+    Detector obj_detector(yolo_cfg_file, yolo_weight);
+    auto obj_names = objects_names_from_file(yolo_class_name_file);
 //yolo detect end
+#endif
 
     ros::Rate loop_rate(30);
 
-	// FILE* fp = fopen("/home/xavier2/camraw.raw", "wb");
-	// if (NULL == fp)
-	// {
-	// 	printf("fopen failed\n");
-	// 	return 0;
-	// }
-	
-	
     while(ros::ok()){
         //ROS_DEBUG_STREAM("cammm");
     
@@ -153,21 +143,14 @@ int main (int argc, char** argv){
 		cvtColor(cameraRawImg, cameraRawImg, cv::COLOR_BGR2RGB);
         ROS_DEBUG_STREAM("imageCap ok");
 
-		auto start = std::chrono::steady_clock::now();
-        //auto det_image = detector.mat_to_image_resize(cameraRawImg);
+#ifdef YOLO_DET
+        yolo_det(obj_detector, cameraRawImg, obj_names);
+#endif
 
-        //std::vector<bbox_t> result_vec = detector.detect_resized(*det_image, cameraRawImg.size().width, cameraRawImg.size().height);
-        //auto end = std::chrono::steady_clock::now();
-        //std::chrono::duration<double> spent = end - start;
-        //std::cout << " Time: " << spent.count() << " sec \n";
-
-        //draw_boxes(cameraRawImg, result_vec, obj_names);
-		
         //cv::imwrite("/home/xavier2/yoloout.png",cameraRawImg);
-		cv::Mat yuvImg;
-		cvtColor(cameraRawImg, yuvImg, cv::COLOR_RGB2YUV_I420);
+		// cv::Mat yuvImg;
+		// cvtColor(cameraRawImg, yuvImg, cv::COLOR_RGB2YUV_I420);
 		//fwrite(yuvImg.data, 1, 1024*1280*3/2, fp);
-
 
         //cv::imshow("111",cameraRawImg);
         //cv::waitKey(0);

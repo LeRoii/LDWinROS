@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(cameracap)
 
+option(YOLO_DET "option for yolo det" OFF)
+if (YOLO_DET)
+  add_definitions(-DYOLO_DET)
+endif()
+
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
 
@@ -170,7 +175,7 @@ add_executable(${PROJECT_NAME}_node src/cameracap_node.cpp
    ${catkin_LIBRARIES}
     MvCameraControl.so
     ${OpenCV_LIBS}
-    #darknet
+    darknet
  )
 
 #############
