@@ -1,6 +1,6 @@
 Dataset_Path = dict(
-    CULane = "/media/iairiv/dbc2aff7-a3bd-4fe8-89f6-9b61c52fc822/kongdeqian/CUlane",
-    Tusimple = "/media/iairiv/7f072dbd-7037-43d9-9b3f-e8b67a86e0be/home/admin1/DATA/Tusimple/train_set"
+    CULane = "/space/data/CUlane",
+    Tusimple = "/space/data/tusimple_lanedata"
 )
 
 Img_Size = dict(
@@ -18,8 +18,8 @@ IMG_STD = dict(
 )
 
 pretrained_weights = dict(
-    vgg16_bn=r'/home/iairiv/PycharmProjects/pertrained_weights/vgg16_bn-6c64b313.pth',
-    vgg16=r'/home/iairiv/PycharmProjects/pertrained_weights/vgg16-397923af.pth',
-    resnet50=r'/home/iairiv/PycharmProjects/pertrained_weights/resnet50-19c8e357.pth'
+    vgg16_bn=r'/space/model/pytorch_pertrained_weights/vgg16_bn-6c64b313.pth',
+    vgg16=r'/space/model/pytorch_pertrained_weights/vgg16-397923af.pth',
+    resnet50=r'/space/model/pytorch_pertrained_weights/resnet50-19c8e357.pth'
 )
 

@@ -4,13 +4,15 @@ import os
 import shutil
 import time
 
+import dataset
+
 import torch.optim as optim
 from torch.optim import lr_scheduler
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from config import *
-import dataset
+
 from model import LaneNet
 from utils.tensorboard import TensorBoard
 from utils.transforms import *
@@ -20,7 +22,7 @@ from utils.postprocess import embedding_post_process
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--exp_dir", type=str, default="./experiments/exp1")
+    parser.add_argument("--exp_dir", type=str, default="/space/code/lane/src/lanedet/lane_waring_final/experiments/exp0")
     parser.add_argument("--resume", "-r", action="store_true")
     args = parser.parse_args()
     return args

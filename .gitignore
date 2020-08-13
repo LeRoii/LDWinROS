@@ -3,4 +3,4 @@ experiments/
 devel/
 build/
 *.png
-
+*.xml
