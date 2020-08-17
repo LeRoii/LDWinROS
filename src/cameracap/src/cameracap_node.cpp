@@ -147,7 +147,7 @@ int main (int argc, char** argv){
         yolo_det(obj_detector, cameraRawImg, obj_names);
 #endif
 
-        //cv::imwrite("/home/xavier2/yoloout.png",cameraRawImg);
+        cv::imwrite("/space/yoloout.png",cameraRawImg);
 		// cv::Mat yuvImg;
 		// cvtColor(cameraRawImg, yuvImg, cv::COLOR_RGB2YUV_I420);
 		//fwrite(yuvImg.data, 1, 1024*1280*3/2, fp);
