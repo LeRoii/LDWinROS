@@ -21,7 +21,6 @@ from sklearn.preprocessing import StandardScaler
 import global_config,time
 
 CFG = global_config.cfg
-i=0
 
 def _morphological_process(image, kernel_size=5):
     """
@@ -317,7 +316,6 @@ class LaneNetPostProcessor(object):
         :return:
         """
 
-        global i
         # convert binary_seg_result
         binary_seg_result = np.array(binary_seg_result * 255, dtype=np.uint8)
         # plt.imshow(binary_seg_result)
@@ -345,14 +343,12 @@ class LaneNetPostProcessor(object):
             instance_seg_result=instance_seg_result
         )
         # print('time:',time.time()-starttime)
-        # cv2.imwrite(str(i)+'mask.png',mask_image)
         if mask_image is None:
             return {
                 'mask_image': None,
                 'fit_params': None,
                 'source_image': None,
             }
-        # i=i+1
         # plt.imshow(mask_image)
         # plt.show()
 
@@ -388,7 +384,7 @@ class LaneNetPostProcessor(object):
             # coordsX = coords[:, 0] * 1920 / 512
 
             coordsY = coords[:, 1] * CFG.CROP_IMG_HEIGHT / 256 + CFG.CROP_IMG_Y
-            coordsX = coords[:, 0] * CFG.CROP_IMG_WIDTH / 512
+            coordsX = coords[:, 0] * CFG.CROP_IMG_WIDTH / 512 + CFG.CROP_IMG_X
 
             # coordsY = coords[:, 1] * 768 / 256 + CFG.VANISH_POINT_Y - CFG.CROP_IMG_HEIGHT/2
             # coordsX = coords[:, 0] * 1536 / 512 + CFG.VANISH_POINT_X - CFG.CROP_IMG_WIDTH/2
