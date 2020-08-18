@@ -3,5 +3,5 @@ experiments/
 devel/
 build/
 *.png
-*.xml
 *.weights
+.idea/
