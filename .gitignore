@@ -5,3 +5,5 @@ build/
 *.png
 *.weights
 .idea/
+.avi
+.bag

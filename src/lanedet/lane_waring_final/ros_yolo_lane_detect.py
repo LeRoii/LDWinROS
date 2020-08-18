@@ -43,11 +43,11 @@ class Lane_warning:
         # self.bridge = CvBridge()
         # self.yolo_result = rospy.Subscriber("YOLO_detect_result", Float64MultiArray, self.callbackyolo)
         # self.image_sub = rospy.Subscriber("YOLO_detect_result", Image, self.callbackRos)
-        self.image_sub = rospy.Subscriber("/camera/rgb/image_raw", Image, self.callbackRos)
+        self.image_sub = rospy.Subscriber("/camera/image", Image, self.callbackRos)
         self.velo_sub = rospy.Subscriber("velocity", Vector3, self.veloCallback)
 
         # self.image_sub = message_filters.Subscriber("/camera/rgb/image_raw", Image，queue_size=1, buff_size=110592*6)
-        self.weights_file = '/space/code/roslane/src/lanedet/lane_waring_final/experiments/exp1/exp1_best.pth'
+        self.weights_file = '/home/no1/code/lane/src/lanedet/lane_waring_final/experiments/exp1/exp1_best.pth'
         self.CUDA = torch.cuda.is_available()
         self.postprocessor = LaneNetPostProcessor()
         self.warning = Detection()
@@ -67,6 +67,8 @@ class Lane_warning:
 
         self.leftlane = Lane('left')
         self.rightlane = Lane('right')
+
+        self.out = cv2.VideoWriter('testwrite.avi',cv2.VideoWriter_fourcc(*'MJPG'), 15.0, (1280,1024),True)
 
     def transform_input(self, img):
         return prep_image(img)
@@ -106,9 +108,9 @@ class Lane_warning:
         # prediction = np.array(prediction)
         #print('cluster use：', time.time()-startt)
 
-        self.maskimg_pub.publish(self.bridge.cv2_to_imgmsg(postprocess_result['mask_image'], "bgr8"))
-        self.binimg_pub.publish(self.bridge.cv2_to_imgmsg(postprocess_result['binary_img'], "mono8"))
-        self.morphoimg_pub.publish(self.bridge.cv2_to_imgmsg(postprocess_result['morpho_img'], "mono8"))
+        # self.maskimg_pub.publish(self.bridge.cv2_to_imgmsg(postprocess_result['mask_image'], "bgr8"))
+        # self.binimg_pub.publish(self.bridge.cv2_to_imgmsg(postprocess_result['binary_img'], "mono8"))
+        # self.morphoimg_pub.publish(self.bridge.cv2_to_imgmsg(postprocess_result['morpho_img'], "mono8"))
 
         # cv2.imwrite(str(g_frameCnt)+'_mask.png', postprocess_result['mask_image'])
         # cv2.imwrite(str(g_frameCnt)+'_binary.png', postprocess_result['binary_img'])
@@ -128,7 +130,11 @@ class Lane_warning:
         print('callbackros')
 
         cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
-        input_image = self.transform_input(cv_image)
+        self.out.write(cv_image)
+
+        cropImg = cropRoi(cv_image)
+        #cv2.imwrite('cropImg.png', cropImg)
+        input_image = self.transform_input(cropImg)
         startt = time.time()
         postProcResult = self.detection(input_image, cv_image)
         
@@ -313,8 +319,8 @@ if __name__ == "__main__":
     # cv2.imshow("12313",image)
     # cv2.waitKey(0)
 
-    # main(sys.argv)
-    test()
+    main(sys.argv)
+    #test()
     # img = cv2.imread('/home/iairiv/Desktop/1.png')
     # #cv2.imshow('111',img)
 

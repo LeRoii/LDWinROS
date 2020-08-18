@@ -346,7 +346,7 @@ class LaneNetPostProcessor(object):
         if mask_image is None:
             return {
                 'mask_image': None,
-                'fit_params': None,
+                'fit_params': [],
                 'source_image': None,
             }
         # plt.imshow(mask_image)
