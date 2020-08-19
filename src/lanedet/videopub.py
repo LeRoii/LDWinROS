@@ -10,11 +10,11 @@ import numpy as np
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 
-videoPath = '/space/data/road/2.avi'
+videoPath = '/space/data/hk/1.avi'
 
-def pubImage():
+def pubVideo():
     rospy.init_node('videopub',anonymous = True)
-    pub = rospy.Publisher('/camera/rgb/image_raw', Image, queue_size = 1)
+    pub = rospy.Publisher('/camera/image', Image, queue_size = 1)
     rate = rospy.Rate(10)
     bridge = CvBridge()
     cap = cv2.VideoCapture(videoPath)
@@ -40,7 +40,7 @@ def pubImage():
 
 
 
-def pubkitti():
+def pubImg():
     image_path = '/home/iairiv/data/kitti'
     imagedir = os.listdir(image_path)
     imagedir.sort()
@@ -77,6 +77,6 @@ def pubkitti():
 
 if __name__ == '__main__':
     try:
-        pubImage()
+        pubVideo()
     except rospy.ROSInterruptException:
         pass
