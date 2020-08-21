@@ -49,6 +49,7 @@ class Lane_warning:
         # self.image_sub = message_filters.Subscriber("/camera/rgb/image_raw", Image，queue_size=1, buff_size=110592*6)
         # self.weights_file = '/home/no1/code/lane/src/lanedet/lane_waring_final/experiments/exp1/exp1_best.pth'
         self.weights_file = '/space/code/lane/src/lanedet/lane_waring_final/experiments/exp1/exp1_best.pth'
+        # self.weights_file = '/space/code/lane/src/lanedet/lane_waring_final/experiments/exp0/exp0_best.pth'
         self.CUDA = torch.cuda.is_available()
         self.postprocessor = LaneNetPostProcessor()
         self.warning = Detection()
@@ -72,9 +73,21 @@ class Lane_warning:
         # self.out = cv2.VideoWriter('testwrite.avi',cv2.VideoWriter_fourcc(*'MJPG'), 15.0, (CFG.IMAGE_WIDTH, CFG.IMAGE_HEIGHT),True)
 
     def transform_input(self, img):
-        return prep_image(img)
+        _set = "IMAGENET"
+        mean = IMG_MEAN[_set]
+        std = IMG_STD[_set]
+        # transform_img = Resize((800, 288))
+        transform_img = Resize((512, 256))
+        transform_x = Compose(ToTensor(), Normalize(mean=mean, std=std))
+        #img_org = img[255:945, :, :]
+        img = transform_img({'img': img})['img']
+        x = transform_x({'img': img})['img']
+        # print(x)
+        x.unsqueeze_(0)
+        x = x.to('cuda')
+        return x
 
-    def detection(self, input, raw):
+    def detection(self, input):
 
         #startt = time.time()
         if self.CUDA:
@@ -83,11 +96,9 @@ class Lane_warning:
             output = self.model(input, None)
 
        # print('detection use：', time.time()-startt)
+        return self.cluster(output)
 
-
-        return self.cluster(output,raw)
-
-    def cluster(self,output,raw):
+    def cluster(self,output):
         #startt = time.time()
 
         global g_frameCnt
@@ -102,13 +113,14 @@ class Lane_warning:
 
         postprocess_result = self.postprocessor.postprocess(
             binary_seg_result=bin_seg_pred,
-            instance_seg_result=embedding,
-            source_image=raw
-        )
+            instance_seg_result=embedding)
 
-        # self.maskimg_pub.publish(self.bridge.cv2_to_imgmsg(postprocess_result['mask_image'], "bgr8"))
-        # self.binimg_pub.publish(self.bridge.cv2_to_imgmsg(postprocess_result['binary_img'], "mono8"))
-        # self.morphoimg_pub.publish(self.bridge.cv2_to_imgmsg(postprocess_result['morpho_img'], "mono8"))
+        if postprocess_result['mask_image'] is None:
+            print('cant find any lane!!!')
+        else:
+            self.maskimg_pub.publish(self.bridge.cv2_to_imgmsg(postprocess_result['mask_image'], "bgr8"))
+            self.binimg_pub.publish(self.bridge.cv2_to_imgmsg(postprocess_result['binary_img'], "mono8"))
+            self.morphoimg_pub.publish(self.bridge.cv2_to_imgmsg(postprocess_result['morpho_img'], "mono8"))
 
         # cv2.imwrite(str(g_frameCnt)+'_mask.png', postprocess_result['mask_image'])
         # cv2.imwrite(str(g_frameCnt)+'_binary.png', postprocess_result['binary_img'])
@@ -127,28 +139,30 @@ class Lane_warning:
         cropImg = cropRoi(frame)
         input_image = self.transform_input(cropImg)
         startt = time.time()
-        postProcResult = self.detection(input_image, frame)
+        postProcResult = self.detection(input_image)
         
-        cv2.imwrite('cropImg.png', cropImg)
+        # cv2.imwrite('cropImg.png', cropImg)
         debugImg = frame.copy()
 
-        if len(postProcResult['fit_params']) > 0:
-            self.leftlane.updateLane(postProcResult['fit_params'])
-            self.rightlane.updateLane(postProcResult['fit_params'])
-            if self.leftlane.detectedLostCnt > 3 and self.rightlane.detectedLostCnt > 3:
-                self.leftlane.initLane()
-                self.rightlane.initLane()
-                print('!!!!!!! detected not fit')
-            lanePoints = {
-                'lanes':[self.leftlane.points,self.rightlane.points]
-            }
-            signal = self.warning.detect(lanePoints)
-            color = (0, 0, 255) if signal == 1 else (0, 255, 0)
-            color = (0, 255, 0)
-            #draw lane
-            for idx in range(11):
-                cv2.line(frame, (int(self.leftlane.points[idx][0]), int(self.leftlane.points[idx][1])), (int(self.leftlane.points[idx+1][0]), int(self.leftlane.points[idx+1][1])), color, 10)
-                cv2.line(frame, (int(self.rightlane.points[idx][0]), int(self.rightlane.points[idx][1])), (int(self.rightlane.points[idx+1][0]), int(self.rightlane.points[idx+1][1])), color, 10)
+        # if len(postProcResult['fit_params']) > 0:
+        self.leftlane.updateLane(postProcResult['fit_params'])
+        self.rightlane.updateLane(postProcResult['fit_params'])
+        if self.leftlane.detectedLostCnt > 3 and self.rightlane.detectedLostCnt > 3:
+            self.leftlane.initLane()
+            self.rightlane.initLane()
+            print('!!!!!!! detected not fit')
+        lanePoints = {
+            'lanes':[self.leftlane.points,self.rightlane.points]
+        }
+        signal = self.warning.detect(lanePoints)
+        color = (0, 0, 255) if signal == 1 else (0, 255, 0)
+        color = (0, 255, 0)
+        #draw lane
+        for idx in range(11):
+            cv2.line(frame, (int(self.leftlane.points[idx][0]), int(self.leftlane.points[idx][1])), (int(self.leftlane.points[idx+1][0]), int(self.leftlane.points[idx+1][1])), color, 10)
+            cv2.line(frame, (int(self.rightlane.points[idx][0]), int(self.rightlane.points[idx][1])), (int(self.rightlane.points[idx+1][0]), int(self.rightlane.points[idx+1][1])), color, 10)
+
+        print('all use：', time.time()-startt)
 
         # debug
         plot_y = np.linspace(CFG.LANE_START_Y, CFG.LANE_END_Y, 12)
@@ -174,36 +188,15 @@ class Lane_warning:
         cv2.imwrite(str(1)+'input_image.png', cropImg)
         # debug end
 
-
-
     def callbackRos(self, data):
         print('callbackros')
 
         cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
         # self.out.write(cv_image)
-        startt = time.time()
 
         self.process(cv_image)
         
-        # cropImg = cropRoi(cv_image)
-        # #cv2.imwrite('cropImg.png', cropImg)
-        # input_image = self.transform_input(cropImg)
         
-        # postProcResult = self.detection(input_image, cv_image)
-        
-        
-        # if len(postProcResult['fit_params']) > 0:
-        #     self.leftlane.updateLane(postProcResult['fit_params'])
-        #     self.rightlane.updateLane(postProcResult['fit_params'])
-        #     # signal = self.warning.detect(prediction)
-        #     signal = 0
-        #     color = (0, 255, 0) if signal == 0 else (0, 0, 255)
-        #     #draw lane
-        #     for idx in range(11):
-        #         cv2.line(cv_image, (int(self.leftlane.points[idx][0]), int(self.leftlane.points[idx][1])), (int(self.leftlane.points[idx+1][0]), int(self.leftlane.points[idx+1][1])), color, 10)
-        #         cv2.line(cv_image, (int(self.rightlane.points[idx][0]), int(self.rightlane.points[idx][1])), (int(self.rightlane.points[idx+1][0]), int(self.rightlane.points[idx+1][1])), color, 10)
-        
-        print('all use：', time.time()-startt)
         # cv2.imwrite('result.png', cv_image)
         self.image_pub.publish(self.bridge.cv2_to_imgmsg(cv_image, "bgr8"))
 
@@ -224,7 +217,7 @@ def test():
     global g_videoPlay, g_keyboardinput, g_writevideo, g_frameCnt
     ic = Lane_warning()
     rospy.init_node("lanedetnode", anonymous=True)
-    cap = cv2.VideoCapture('/space/data/hk/5.avi')
+    cap = cv2.VideoCapture('/space/data/xq/cross/5.avi')
     ret, frame = cap.read()
     rate = rospy.Rate(10)
     rospy.loginfo('video frame cnt:%d', cap.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -267,26 +260,6 @@ def cropRoi(img):
 
     return img[CFG.CROP_IMG_Y:CFG.CROP_IMG_Y+CFG.CROP_IMG_HEIGHT, CFG.CROP_IMG_X:CFG.CROP_IMG_X+CFG.CROP_IMG_WIDTH, :].copy()
 
-def prep_image(img):
-    """
-    Prepare image for inputting to the neural network.
-
-    Returns a Variable
-    """
-    _set = "IMAGENET"
-    mean = IMG_MEAN[_set]
-    std = IMG_STD[_set]
-    # transform_img = Resize((800, 288))
-    transform_img = Resize((512, 256))
-    transform_x = Compose(ToTensor(), Normalize(mean=mean, std=std))
-    #img_org = img[255:945, :, :]
-    img = transform_img({'img': img})['img']
-    x = transform_x({'img': img})['img']
-    # print(x)
-    x.unsqueeze_(0)
-    x = x.to('cuda')
-    return x
-
 def main(args):
     ic = Lane_warning()
     rospy.init_node("lanedetnode", anonymous=True)
@@ -295,8 +268,8 @@ def main(args):
 
 
 if __name__ == "__main__":
-    main(sys.argv)
-    #test()
+    # main(sys.argv)
+    test()
 
 
 

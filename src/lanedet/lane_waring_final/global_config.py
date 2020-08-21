@@ -73,14 +73,44 @@ __C.POSTPROCESS.DBSCAN_EPS = 0.2
 # Set the post process dbscan min samples threshold
 __C.POSTPROCESS.DBSCAN_MIN_SAMPLES = 200
 
-# image vanish point
-__C.IMAGE_WIDTH = 1280
-__C.IMAGE_HEIGHT = 1024
+# xingqing campus
+# __C.IMAGE_WIDTH = 2448
+# __C.IMAGE_HEIGHT = 2048
 
-__C.CROP_IMG_WIDTH = 1280
-__C.CROP_IMG_HEIGHT = 1024
+# __C.CROP_IMG_WIDTH = 2048
+# __C.CROP_IMG_HEIGHT = 1058
+# __C.CROP_IMG_X = 0
+# __C.CROP_IMG_Y = 990
+
+__C.IMAGE_WIDTH = 2448
+__C.IMAGE_HEIGHT = 2048
+
+__C.CROP_IMG_WIDTH = 2048
+__C.CROP_IMG_HEIGHT = 2048
 __C.CROP_IMG_X = 0
 __C.CROP_IMG_Y = 0
 
-__C.LANE_START_Y = 660
-__C.LANE_END_Y = 1100
+__C.LANE_START_Y = 1100
+__C.LANE_END_Y = 1900
+
+
+
+#green taxi
+
+# # Set the post process connect components analysis min area threshold
+# __C.POSTPROCESS.MIN_AREA_THRESHOLD = 100
+# # Set the post process dbscan search radius threshold
+# __C.POSTPROCESS.DBSCAN_EPS = 0.2
+# # Set the post process dbscan min samples threshold
+# __C.POSTPROCESS.DBSCAN_MIN_SAMPLES = 200
+
+# __C.IMAGE_WIDTH = 1920
+# __C.IMAGE_HEIGHT = 1200
+
+# __C.CROP_IMG_WIDTH = 1920
+# __C.CROP_IMG_HEIGHT = 690
+# __C.CROP_IMG_X = 0
+# __C.CROP_IMG_Y = 255
+
+# __C.LANE_START_Y = 600
+# __C.LANE_END_Y = 1100

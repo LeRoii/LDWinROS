@@ -303,9 +303,7 @@ class LaneNetPostProcessor(object):
         return ret
 
     def postprocess(self, binary_seg_result, instance_seg_result=None,
-                    min_area_threshold=100,
-                    data_source='IAIR',
-                    source_image = None):
+                    min_area_threshold=100):
         """
 
         :param binary_seg_result:
@@ -318,16 +316,9 @@ class LaneNetPostProcessor(object):
 
         # convert binary_seg_result
         binary_seg_result = np.array(binary_seg_result * 255, dtype=np.uint8)
-        # plt.imshow(binary_seg_result)
-        # plt.show()
         # apply image morphology operation to fill in the hold and reduce the small area
         morphological_ret = _morphological_process(binary_seg_result, kernel_size=5)
-        # plt.imshow(morphological_ret)
-        # plt.show()
-
         connect_components_analysis_ret = _connect_components_analysis(image=morphological_ret)
-        # plt.imshow(connect_components_analysis_ret[1])
-        # plt.show()
 
         labels = connect_components_analysis_ret[1]
         stats = connect_components_analysis_ret[2]
@@ -347,7 +338,6 @@ class LaneNetPostProcessor(object):
             return {
                 'mask_image': None,
                 'fit_params': [],
-                'source_image': None,
             }
         # plt.imshow(mask_image)
         # plt.show()
@@ -361,6 +351,9 @@ class LaneNetPostProcessor(object):
         
 
         for lane_index, coords in enumerate(lane_coords):
+            print('post process:coords size:{},y diff:{}'.format(coords.size,abs(coords[:,1].max() - coords[:,1].min())))
+            if coords.size < 800 or abs(coords[:,1].max() - coords[:,1].min()) < 50: # mask points not enough, detected lane not long enough
+                continue
             # if data_source == 'tusimple':
             #     tmp_mask = np.zeros(shape=(720, 1280), dtype=np.uint8)
             #     tmp_mask[tuple((np.int_(coords[:, 1] * 720 / 256), np.int_(coords[:, 0] * 1280 / 512)))] = 255
@@ -435,8 +428,6 @@ class LaneNetPostProcessor(object):
         ret = {
             'mask_image': mask_image,
             'fit_params': fit_params,
-            #'source_image': source_image,
-            #'points': IAIR_line_points,
             'binary_img': binary_seg_result,
             'morpho_img': morphological_ret
         }

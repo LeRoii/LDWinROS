@@ -29,17 +29,19 @@ class Lane:
     def isLost(self):
         self.lostCnt = self.lostCnt+1
         if self.age > 30:
-            if self.lostCnt > 6:
+            if self.lostCnt > 12:
                 return self.reset()
         elif self.age > 10:
-            if self.lostCnt > 4:
+            if self.lostCnt > 8:
                 return self.reset()
-        elif self.lostCnt > 3:
+        elif self.lostCnt > 5:
                 return self.reset()
+        self.age = self.age+1
         return  False
 
     def findDetectedLeftRightLane(self, lane_x_coords):
-        
+        self.detectedLeftLane = np.zeros([12,2], dtype = int)
+        self.detectedRightLane = np.zeros([12,2], dtype = int)
 
         if len(lane_x_coords) >= 2:
             sorted_lane_x_coords = sorted(lane_x_coords[:2],key=(lambda x : x[5]))
@@ -57,11 +59,22 @@ class Lane:
                 self.detectedRightLane[:,1] = np.linspace(CFG.LANE_START_Y, CFG.LANE_END_Y, 12)
 
     def initLane(self):
-        self.points = self.detectedLeftLane.copy()  if self.laneIdx == 'left' else self.detectedRightLane.copy()
+        if self.laneIdx == 'left' and not (self.detectedLeftLane == 0).all():
+            self.points = self.detectedLeftLane.copy()
+        elif self.laneIdx == 'right' and not (self.detectedRightLane == 0).all():
+            self.points = self.detectedRightLane.copy()
+        else:
+            return
+
+        # self.points = self.detectedLeftLane.copy()  if self.laneIdx == 'left' else self.detectedRightLane.copy()
         self.isInit = True
         self.age = self.age+1
 
     def updateLane(self, fit_params):
+        if len(fit_params) == 0:
+            self.isLost()
+            return
+
         plot_y = np.linspace(CFG.LANE_START_Y, CFG.LANE_END_Y, 12)
         lane_x_coords = []
         # detectedLeftLaneX = [0] * 12
